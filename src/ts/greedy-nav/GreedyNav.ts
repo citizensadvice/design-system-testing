@@ -258,21 +258,6 @@ const getChildrenWidth = (e: HTMLElement) => {
   return sum;
 };
 
-/**
- * Get width
- * @param elem
- * @returns {number}
- */
-const calculateWidths = (_this: HTMLElement, offsetPixels: number) => {
-  const totalWidth = getElementContentWidth(_this);
-  // Check if parent is the navwrapper before calculating its width
-
-  const restWidth = getChildrenWidth(_this) + offsetPixels;
-  const viewportWidth = viewportSize().width;
-
-  return { totalWidth, restWidth, viewportWidth };
-};
-
 const relatedTarget = (
   e: Nullable<FocusEvent>,
   document: HTMLDocument
@@ -310,6 +295,8 @@ export class GreedyNavMenu {
 
   viewportWidth: number;
 
+  hasDropdown: Boolean;
+
   /**
    * Only insert the document when using JSDOM for testing.
    */
@@ -334,6 +321,8 @@ export class GreedyNavMenu {
     this.totalWidth = 0;
     this.restWidth = 0;
     this.viewportWidth = 0;
+
+    this.hasDropdown = false;
 
     this.document = document || window.document;
   }
@@ -429,8 +418,8 @@ export class GreedyNavMenu {
       threshold: 0.98,
     };
 
-    const observer = new IntersectionObserver(
-      this.intersectionCallback,
+    const observer: IntersectionObserver = new IntersectionObserver(
+      this.intersectionCallback.bind(this),
       options
     );
     const menuItems = navWrapper.querySelectorAll('.js-cads-greedy-nav ul li');
@@ -440,20 +429,29 @@ export class GreedyNavMenu {
     });
   }
 
-  intersectionCallback(entries): void {
-    if (entries.filter((entry) => !entry.isIntersecting).length === 1) {
+  intersectionCallback(entries: Array<IntersectionObserverEntry>): void {
+    if (
+      !this.hasDropdown &&
+      entries.filter(
+        (entry: IntersectionObserverEntry) => !entry.isIntersecting
+      ).length === 1
+    ) {
       console.log('MENU APPEARS');
+      this.hasDropdown = true;
     }
 
-    if (entries.filter((entry) => !entry.isIntersecting).length === 0) {
+    if (
+      this.hasDropdown &&
+      entries.filter((entry) => !entry.isIntersecting).length === 0
+    ) {
       console.log('MENU GOES BYE');
+      this.hasDropdown = false;
     }
 
     entries.forEach((entry) => {
-      console.log({
-        entry: entry.target.innerHTML,
-        isIntersecting: entry.isIntersecting,
-      });
+      if (!entry.isIntersecting) {
+        this.toMenu(entry.target as HTMLElement);
+      }
     });
   }
 
