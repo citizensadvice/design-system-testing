@@ -123,14 +123,9 @@
   }
 
   &__wrapper {
-    position: relative;
-    visibility: hidden;
-
-    @include cads-media-breakpoint-up(md) {
-      position: absolute;
-      right: 0;
-      height: 100%;
-    }
+    position: absolute;
+    right: 0;
+    height: 100%;
   }
 
   &-is-visible {
