@@ -54,41 +54,6 @@ export const getClosest = (
 };
 
 /**
- * Debounced resize to throttle execution
- * @param func
- * @param wait
- * @param immediate
- * @returns {Function}
- */
-function debounce<Return>(func: () => Return, wait: number, immediate = false) {
-  let timeout: Nullable<number>;
-  let finishedTimeout: number;
-  return function debounced(this: Return, ...args: []) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const context = this;
-
-    const later = () => {
-      timeout = null;
-      if (immediate) func.apply(context, args);
-    };
-    const callNow = immediate && timeout;
-
-    if (timeout) {
-      window.clearTimeout(timeout);
-    }
-
-    timeout = window.setTimeout(later, wait);
-    if (callNow) func.apply(context, args);
-
-    // Safari requires this to correctly fire resize when leaving fullscreen mode.
-    window.clearTimeout(finishedTimeout);
-    finishedTimeout = window.setTimeout(() => {
-      func.apply(context, args);
-    }, 800);
-  };
-}
-
-/**
  * return true if el has a parent
  * @param el
  * @param parent
@@ -102,20 +67,6 @@ const parent = (element: Nullable<HTMLElement>, parentNode: Nullable<Node>) => {
     el = el.parentNode;
   }
   return false;
-};
-
-/**
- * Update count on dropdown toggle button
- */
-const updateCount = (
-  _this: HTMLElement,
-  navDropdownToggleSelector: string,
-  breaks: number[]
-): void => {
-  // eslint-disable-next-line no-unused-expressions
-  _this
-    .querySelector<HTMLElement>(navDropdownToggleSelector)
-    ?.setAttribute('cadsGreedyNav-count', `${breaks.length}`);
 };
 
 export const updateLabel = (
@@ -145,60 +96,6 @@ const checkForSymbols = (str: string) => {
     return false;
   }
   return true;
-};
-
-/**
- * Get innerwidth without padding
- * @param element
- * @returns {number}
- */
-const getElementContentWidth = (element: HTMLElement) => {
-  const styles = window.getComputedStyle(element);
-  const padding =
-    parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
-
-  return element.clientWidth - padding;
-};
-
-/**
- * Get viewport size
- * @returns {{width: number, height: number}}
- */
-const viewportSize = () => {
-  const doc = document;
-  const w = window;
-  const docEl =
-    doc.compatMode && doc.compatMode === 'CSS1Compat'
-      ? doc.documentElement
-      : doc.body;
-
-  let width = docEl.clientWidth;
-  let height = docEl.clientHeight;
-
-  // mobile zoomed in?
-  if (w.innerWidth && width > w.innerWidth) {
-    width = w.innerWidth;
-    height = w.innerHeight;
-  }
-
-  return { width, height };
-};
-
-/**
- * Count width of children and return the value
- * @param e
- */
-const getChildrenWidth = (e: HTMLElement) => {
-  const children = e.childNodes;
-  let sum = 0;
-  for (let i = 0; i < children.length; i++) {
-    if (children[i].nodeType !== 3) {
-      if (!Number.isNaN((<HTMLElement>children[i]).offsetWidth)) {
-        sum += (<HTMLElement>children[i]).offsetWidth;
-      }
-    }
-  }
-  return sum;
 };
 
 const relatedTarget = (
