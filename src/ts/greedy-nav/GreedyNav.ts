@@ -346,7 +346,8 @@ export class GreedyNavMenu {
        */
       this.listeners(navWrapperElement);
 
-      this.prepareObserver(navWrapperElement);
+      this.prepareLastItemObserver();
+      this.prepareOtherItemsObserver();
     });
 
     /**
@@ -355,17 +356,17 @@ export class GreedyNavMenu {
     this.document.documentElement.classList.add(this.settings.initClass);
   }
 
-  prepareObserver(navWrapper: HTMLElement): void {
+  prepareLastItemObserver(): void {
     const options = {
-      root: null, //document.querySelector('.js-cads-greedy-nav'),
+      root: null,
       threshold: 0.98,
     };
 
     const observer: IntersectionObserver = new IntersectionObserver(
-      this.intersectionCallback.bind(this),
+      this.viewportIntersectionCallback.bind(this),
       options
     );
-    const lastMenuItem = navWrapper.querySelector(
+    const lastMenuItem = this.mainNavWrapper?.querySelector(
       '.js-cads-greedy-nav ul li:last-child'
     );
 
@@ -374,9 +375,41 @@ export class GreedyNavMenu {
     }
   }
 
-  intersectionCallback(
-    entries: Array<IntersectionObserverEntry>,
-    observer: IntersectionObserver
+  prepareOtherItemsObserver(): void {
+    const options = {
+      root: null,
+      threshold: 1,
+      rootMargin: '0px -80px 0px 0px',
+    };
+
+    const observer: IntersectionObserver = new IntersectionObserver(
+      this.dropdownToggleIntersectionCallback.bind(this),
+      options
+    );
+
+    const nonLastMenuItems = this.mainNavWrapper?.querySelectorAll(
+      '.js-cads-greedy-nav ul li:not(:last-child)'
+    );
+
+    nonLastMenuItems?.forEach((item) => observer.observe(item));
+  }
+
+  dropdownToggleIntersectionCallback(
+    entries: Array<IntersectionObserverEntry>
+  ): void {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) {
+        (entry.target as HTMLElement).style['visibility'] = 'hidden';
+        this.toDropdown(entry.target as HTMLElement);
+      } else {
+        (entry.target as HTMLElement).style['visibility'] = 'visible';
+        this.toMenu(entry.target as HTMLElement);
+      }
+    });
+  }
+
+  viewportIntersectionCallback(
+    entries: Array<IntersectionObserverEntry>
   ): void {
     if (
       !this.hasDropdown &&
@@ -618,7 +651,7 @@ export class GreedyNavMenu {
    */
   toDropdown(menuItem: HTMLElement): void {
     const clonedItem = menuItem.cloneNode(true);
-    (clonedItem as HTMLElement).style['visibility'] = 'visible';
+    (clonedItem as HTMLElement).style.removeProperty('visibility');
     this.navDropdown?.append(clonedItem);
 
     this.updateToggle();
