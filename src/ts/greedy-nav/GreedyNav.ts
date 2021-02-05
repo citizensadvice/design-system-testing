@@ -105,63 +105,6 @@ const parent = (element: Nullable<HTMLElement>, parentNode: Nullable<Node>) => {
 };
 
 /**
- * Show/hide toggle button
- */
-export const showToggle = (
-  navWrapperElement: HTMLElement,
-  navDropdownToggleSelector: string,
-  breaks: number[]
-): void => {
-  if (breaks.length < 1) {
-    const navDropdownToggle = navWrapperElement.querySelector<HTMLElement>(
-      navDropdownToggleSelector
-    );
-
-    if (navDropdownToggle === null) {
-      return;
-    }
-
-    navDropdownToggle.classList.add('cads-greedy-nav-is-hidden');
-    navDropdownToggle.classList.remove('cads-greedy-nav-is-visible');
-    navWrapperElement.classList.remove('cads-greedy-nav-has-dropdown');
-
-    /**
-     * Set aria attributes for accessibility
-     */
-
-    const navWrapper = navWrapperElement.querySelector<HTMLElement>(
-      '.cads-greedy-nav__wrapper'
-    );
-
-    if (navWrapper) {
-      navWrapper.setAttribute('aria-haspopup', 'false');
-    }
-  } else {
-    const navDropdownToggle = navWrapperElement.querySelector<HTMLElement>(
-      navDropdownToggleSelector
-    );
-
-    if (navDropdownToggle === null) {
-      return;
-    }
-    navDropdownToggle.classList.add('cads-greedy-nav-is-visible');
-    navDropdownToggle.classList.remove('cads-greedy-nav-is-hidden');
-    navWrapperElement.classList.add('cads-greedy-nav-has-dropdown');
-
-    /**
-     * Set aria attributes for accessibility
-     */
-    const navWrapper = navWrapperElement.querySelector<HTMLElement>(
-      '.cads-greedy-nav__wrapper'
-    );
-
-    if (navWrapper) {
-      navWrapper.setAttribute('aria-haspopup', 'true');
-    }
-  }
-};
-
-/**
  * Update count on dropdown toggle button
  */
 const updateCount = (
@@ -422,14 +365,19 @@ export class GreedyNavMenu {
       this.intersectionCallback.bind(this),
       options
     );
-    const menuItems = navWrapper.querySelectorAll('.js-cads-greedy-nav ul li');
+    const lastMenuItem = navWrapper.querySelector(
+      '.js-cads-greedy-nav ul li:last-child'
+    );
 
-    menuItems.forEach((item) => {
-      observer.observe(item);
-    });
+    if (lastMenuItem) {
+      observer.observe(lastMenuItem);
+    }
   }
 
-  intersectionCallback(entries: Array<IntersectionObserverEntry>): void {
+  intersectionCallback(
+    entries: Array<IntersectionObserverEntry>,
+    observer: IntersectionObserver
+  ): void {
     if (
       !this.hasDropdown &&
       entries.filter(
@@ -442,14 +390,20 @@ export class GreedyNavMenu {
 
     if (
       this.hasDropdown &&
-      entries.filter((entry) => !entry.isIntersecting).length === 0
+      entries.filter(
+        (entry: IntersectionObserverEntry) => !entry.isIntersecting
+      ).length === 0
     ) {
-      console.log('MENU GOES BYE');
+      console.log('MENU GOES');
       this.hasDropdown = false;
     }
 
     entries.forEach((entry) => {
       if (!entry.isIntersecting) {
+        (entry.target as HTMLElement).style['visibility'] = 'hidden';
+        this.toDropdown(entry.target as HTMLElement);
+      } else {
+        (entry.target as HTMLElement).style['visibility'] = 'visible';
         this.toMenu(entry.target as HTMLElement);
       }
     });
@@ -662,41 +616,12 @@ export class GreedyNavMenu {
   /**
    * Move item to dropdown
    */
-  toDropdown(navigation: HTMLElement): void {
-    const navDropdown = navigation.querySelector<HTMLElement>(
-      this.navDropdownSelector
-    );
-    const mainNav = navigation.querySelector<HTMLElement>(this.mainNavSelector);
+  toDropdown(menuItem: HTMLElement): void {
+    const clonedItem = menuItem.cloneNode(true);
+    (clonedItem as HTMLElement).style['visibility'] = 'visible';
+    this.navDropdown?.append(clonedItem);
 
-    if (navDropdown && mainNav) {
-      /**
-       * move last child of navigation menu to dropdown
-       */
-      if (
-        navDropdown.firstChild &&
-        mainNav.children.length > 0 &&
-        mainNav.lastElementChild
-      ) {
-        navDropdown.insertBefore(
-          mainNav.lastElementChild,
-          navDropdown.firstChild
-        );
-      } else if (mainNav.children.length > 0 && mainNav.lastElementChild) {
-        navDropdown.appendChild(mainNav.lastElementChild);
-      }
-    }
-
-    /**
-     * check if we need to show toggle menu button
-     */
-    showToggle(navigation, this.navDropdownToggleSelector, this.breaks);
-
-    /**
-     * update count on dropdown toggle button
-     */
-    if (mainNav && mainNav.children.length > 0 && this.settings.count) {
-      updateCount(navigation, this.navDropdownToggleSelector, this.breaks);
-    }
+    this.updateToggle();
 
     /**
      * If item has been moved to dropdown trigger the callback
@@ -707,35 +632,15 @@ export class GreedyNavMenu {
   /**
    * Move item to menu
    */
-  toMenu(_this: HTMLElement): void {
-    const navDropdown = _this.querySelector<HTMLElement>(
-      this.navDropdownSelector
-    );
-    const mainNav = _this.querySelector<HTMLElement>(this.mainNavSelector);
+  toMenu(menuItem: HTMLElement): void {
+    this.navDropdown?.childNodes.forEach((node) => {
+      const item = node as HTMLElement;
+      if (item && item.innerHTML === menuItem.innerHTML) {
+        this.navDropdown?.removeChild(node);
+      }
+    });
 
-    /**
-     * Move items from dropdown to menu
-     */
-    if (
-      mainNav &&
-      navDropdown &&
-      navDropdown.children.length > 0 &&
-      navDropdown.firstElementChild
-    ) {
-      mainNav.appendChild(navDropdown.firstElementChild);
-    }
-
-    /**
-     * Check if we need to show toggle menu button
-     */
-    showToggle(_this, this.navDropdownToggleSelector, this.breaks);
-
-    /**
-     * update count on dropdown toggle button
-     */
-    if (mainNav && mainNav.children.length > 0 && this.settings.count) {
-      updateCount(_this, this.navDropdownToggleSelector, this.breaks);
-    }
+    this.updateToggle();
 
     /**
      * If item has been moved back to the main menu trigger the callback
@@ -753,6 +658,29 @@ export class GreedyNavMenu {
     // Remove toggle
     if (this.toggleWrapper) {
       this.toggleWrapper.remove();
+    }
+  }
+
+  updateToggle(): void {
+    if (this.hasDropdown) {
+      this.navDropdownToggle?.classList.remove('cads-greedy-nav-is-hidden');
+      this.navDropdownToggle?.classList.add('cads-greedy-nav-is-visible');
+      this.mainNavWrapper?.classList.add('cads-greedy-nav-has-dropdown');
+    } else {
+      this.navDropdownToggle?.classList.add('cads-greedy-nav-is-hidden');
+      this.navDropdownToggle?.classList.remove('cads-greedy-nav-is-visible');
+      this.mainNavWrapper?.classList.remove('cads-greedy-nav-has-dropdown');
+    }
+    /**
+     * Set aria attributes for accessibility
+     */
+
+    const navWrapper = this.mainNavWrapper?.querySelector<HTMLElement>(
+      '.cads-greedy-nav__wrapper'
+    );
+
+    if (navWrapper) {
+      navWrapper.setAttribute('aria-haspopup', this.hasDropdown.toString());
     }
   }
 
