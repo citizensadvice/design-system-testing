@@ -135,7 +135,7 @@ export class GreedyNavMenu {
 
   viewportWidth: number;
 
-  hasDropdown: Boolean;
+  hasDropdown: boolean;
 
   /**
    * Only insert the document when using JSDOM for testing.
@@ -295,12 +295,13 @@ export class GreedyNavMenu {
     entries: Array<IntersectionObserverEntry>
   ): void {
     entries.forEach((entry) => {
+      const target = entry.target as HTMLElement;
       if (!entry.isIntersecting) {
-        (entry.target as HTMLElement).style['visibility'] = 'hidden';
-        this.toDropdown(entry.target as HTMLElement);
+        target.style.visibility = 'hidden';
+        this.toDropdown(target);
       } else {
-        (entry.target as HTMLElement).style['visibility'] = 'visible';
-        this.toMenu(entry.target as HTMLElement);
+        target.style.visibility = 'visible';
+        this.toMenu(target);
       }
     });
   }
@@ -327,12 +328,13 @@ export class GreedyNavMenu {
     }
 
     entries.forEach((entry) => {
+      const target = entry.target as HTMLElement;
       if (!entry.isIntersecting) {
-        (entry.target as HTMLElement).style['visibility'] = 'hidden';
-        this.toDropdown(entry.target as HTMLElement);
+        target.style.visibility = 'hidden';
+        this.toDropdown(target);
       } else {
-        (entry.target as HTMLElement).style['visibility'] = 'visible';
-        this.toMenu(entry.target as HTMLElement);
+        target.style.visibility = 'visible';
+        this.toMenu(target);
       }
     });
   }
