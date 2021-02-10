@@ -534,8 +534,9 @@ export class GreedyNavMenu {
      */
     this.document.onkeydown = (evt: KeyboardEvent) => {
       const event = evt || window.event;
+      const ESCAPE_KEY = 27;
 
-      if (event.keyCode === 27) {
+      if (this.hasDropdown && event.keyCode === ESCAPE_KEY) {
         this.closeDropDown(navWrapper);
       }
     };
