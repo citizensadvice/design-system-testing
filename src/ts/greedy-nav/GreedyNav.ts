@@ -264,7 +264,7 @@ export class GreedyNavMenu {
       options
     );
     const lastMenuItem = this.mainNavWrapper?.querySelector(
-      '.js-cads-greedy-nav ul li:last-child'
+      '.js-cads-greedy-nav ul:not(.js-cads-copy-into-nav) li:last-child'
     );
 
     if (lastMenuItem) {
@@ -285,7 +285,7 @@ export class GreedyNavMenu {
     );
 
     const nonLastMenuItems = this.mainNavWrapper?.querySelectorAll(
-      '.js-cads-greedy-nav ul li:not(:last-child)'
+      'li.cads-navigation__list-item:not(:last-child)'
     );
 
     nonLastMenuItems?.forEach((item) => observer.observe(item));
@@ -314,7 +314,6 @@ export class GreedyNavMenu {
         (entry: IntersectionObserverEntry) => !entry.isIntersecting
       ).length === 1
     ) {
-      console.log('MENU APPEARS');
       this.hasDropdown = true;
     }
 
@@ -324,7 +323,6 @@ export class GreedyNavMenu {
         (entry: IntersectionObserverEntry) => !entry.isIntersecting
       ).length === 0
     ) {
-      console.log('MENU GOES');
       this.hasDropdown = false;
     }
 
@@ -547,9 +545,9 @@ export class GreedyNavMenu {
    * Move item to dropdown
    */
   toDropdown(menuItem: HTMLElement): void {
-    const clonedItem = menuItem.cloneNode(true);
-    (clonedItem as HTMLElement).style.removeProperty('visibility');
-    this.navDropdown?.append(clonedItem);
+    const clonedItem = menuItem.cloneNode(true) as HTMLElement;
+    clonedItem.style.removeProperty('visibility');
+    this.navDropdown?.insertAdjacentElement('afterbegin', clonedItem);
 
     this.updateToggle();
 
