@@ -253,6 +253,9 @@ export class GreedyNavMenu {
     this.document.documentElement.classList.add(this.settings.initClass);
   }
 
+  /**
+   * Observe intersection between last item in nav and the viewport edge
+   */
   prepareLastItemObserver(): void {
     const options = {
       root: null,
@@ -272,6 +275,9 @@ export class GreedyNavMenu {
     }
   }
 
+  /**
+   * Observe intersection between all non-last items in the nav and the dropdown toggle
+   */
   prepareOtherItemsObserver(): void {
     const options = {
       root: null,
@@ -309,20 +315,13 @@ export class GreedyNavMenu {
   viewportIntersectionCallback(
     entries: Array<IntersectionObserverEntry>
   ): void {
-    if (
-      !this.hasDropdown &&
-      entries.filter(
-        (entry: IntersectionObserverEntry) => !entry.isIntersecting
-      ).length === 1
-    ) {
+    if (!this.hasDropdown && entries.some((entry) => !entry.isIntersecting)) {
       this.hasDropdown = true;
     }
 
     if (
       this.hasDropdown &&
-      entries.filter(
-        (entry: IntersectionObserverEntry) => !entry.isIntersecting
-      ).length === 0
+      entries.filter((entry) => !entry.isIntersecting).length === 0
     ) {
       this.hasDropdown = false;
     }
@@ -552,7 +551,7 @@ export class GreedyNavMenu {
     clonedItem.style.removeProperty('visibility');
     this.navDropdown?.insertAdjacentElement('afterbegin', clonedItem);
 
-    this.updateToggle();
+    this.updateToggle(this.hasDropdown);
 
     /**
      * If item has been moved to dropdown trigger the callback
@@ -571,7 +570,7 @@ export class GreedyNavMenu {
       }
     });
 
-    this.updateToggle();
+    this.updateToggle(this.hasDropdown);
 
     /**
      * If item has been moved back to the main menu trigger the callback
@@ -592,8 +591,8 @@ export class GreedyNavMenu {
     }
   }
 
-  updateToggle(): void {
-    if (this.hasDropdown) {
+  updateToggle(showDropdown: boolean): void {
+    if (showDropdown) {
       this.navDropdownToggle?.classList.remove('cads-greedy-nav-is-hidden');
       this.navDropdownToggle?.classList.add('cads-greedy-nav-is-visible');
       this.mainNavWrapper?.classList.add('cads-greedy-nav-has-dropdown');
