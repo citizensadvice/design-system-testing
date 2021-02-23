@@ -25,7 +25,7 @@ class Driver
     Capybara.configure do |config|
       config.run_server = false
       config.default_driver = :selenium
-      config.default_max_wait_time = 0
+      config.default_max_wait_time = 1
       config.app_host = base_url
       config.default_normalize_ws = true if safari?
     end
